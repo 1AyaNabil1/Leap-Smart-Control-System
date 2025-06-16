@@ -444,57 +444,56 @@ function adjustQuantity(itemId, adjustment) {
 
 // Initialize the page
 document.addEventListener("DOMContentLoaded", async () => {
-  // Initialize admin auth check
-  initAdminAuthCheck();
-
-  // Display admin header
-  await displayAdmin();
-
-  // Always reset the form and UI on page load
-  const addItemForm = document.getElementById("addItemForm");
-  const imagePreview = document.getElementById("imagePreview");
-  if (addItemForm) addItemForm.reset();
-  if (imagePreview) imagePreview.innerHTML = `
-    <i class=\"fa-solid fa-cloud-arrow-up\"></i>
-    <span>Upload Image</span>
-  `;
-  editingItemId = null;
-  const submitBtn = document.querySelector(".submit-btn");
-  if (submitBtn) submitBtn.textContent = "Add Item";
-
-  console.log("DOM Content Loaded");
-  // Fetch items from Firestore
-  const items = await fetchItems();
-  console.log("Items fetched:", items);
+  const loadingOverlay = document.getElementById('loading-overlay');
   
-  // Setup search functionality
-  const searchInput = document.getElementById("search-input");
-  searchInput.addEventListener("input", (e) => {
-    const filteredItems = filterItems(e.target.value, items);
-    renderItems(filteredItems);
-  });
+  try {
+    // Initialize admin auth check
+    initAdminAuthCheck();
 
-  // Setup modal close functionality
-  const modal = document.getElementById("descriptionModal");
-  const closeBtn = document.querySelector(".description-modal-close");
+    // Display admin header
+    await displayAdmin();
 
-  closeBtn.onclick = function () {
-    modal.style.display = "none";
-  };
+    // Fetch and render initial items
+    let items = await fetchItems();
+    renderItems(items);
 
-  window.onclick = function (event) {
-    if (event.target === modal) {
-      modal.style.display = "none";
+    // Set up search functionality
+    const searchInput = document.getElementById("search-input");
+    if (searchInput) {
+      searchInput.addEventListener("input", (e) => {
+        const filteredItems = filterItems(e.target.value, items);
+        renderItems(filteredItems);
+      });
     }
-  };
 
-  // Setup image preview
-  setupImagePreview();
+    // Set up image preview functionality
+    setupImagePreview();
 
-  // Setup form submission
-  const addItemFormEl = document.getElementById("addItemForm");
-  addItemFormEl.addEventListener("submit", handleFormSubmit);
+    // Set up form submission
+    const addItemForm = document.getElementById("addItemForm");
+    if (addItemForm) {
+      addItemForm.addEventListener("submit", handleFormSubmit);
+    }
 
-  // Initial render
-  renderItems(items);
+    // Hide loading overlay after everything is loaded
+    loadingOverlay.classList.add('hidden');
+  } catch (error) {
+    console.error("Error initializing items page:", error);
+    loadingOverlay.classList.add('error');
+    loadingOverlay.innerHTML = `
+      <div class="loading-container">
+        <div class="loading-text">
+          <span class="brand">Error</span>
+          <span class="subtitle">Failed to load dashboard</span>
+        </div>
+        <div class="loading-message">
+          <i class="fas fa-exclamation-circle"></i>
+          <span>${error.message || 'An unexpected error occurred'}</span>
+        </div>
+        <button onclick="window.location.reload()">
+          <i class="fas fa-redo"></i> Retry
+        </button>
+      </div>
+    `;
+  }
 });
