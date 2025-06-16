@@ -356,118 +356,128 @@ async function displayAdmin() {
 
 // Initialize the page
 document.addEventListener("DOMContentLoaded", async () => {
-  // Initialize admin auth check
-  initAdminAuthCheck();
+  const loadingOverlay = document.getElementById('loading-overlay');
+  
+  try {
+    // Initialize admin auth check
+    initAdminAuthCheck();
 
-  // Display admin header
-  await displayAdmin();
+    // Display admin header
+    await displayAdmin();
 
-  // Fetch and render initial issues
-  let issues = await fetchIssues();
-  renderIssues(issues);
+    // Fetch and render initial issues
+    let issues = await fetchIssues();
+    renderIssues(issues);
 
-  // Search functionality
-  const searchInput = document.getElementById("search-input");
-  searchInput.addEventListener("input", (e) => {
-    const filteredIssues = filterIssues(issues, e.target.value);
-    renderIssues(filteredIssues);
-  });
-
-  // Tab functionality
-  const tabButtons = document.querySelectorAll(".tab-btn");
-  tabButtons.forEach((button) => {
-    button.addEventListener("click", () => {
-      tabButtons.forEach((btn) => btn.classList.remove("active"));
-      button.classList.add("active");
-
-      // Filter issues based on tab
-      let filteredIssues = issues;
-      const tabText = button.textContent.trim();
-
-      if (tabText === "All Issues") {
-        filteredIssues = issues;
-      } else if (tabText === "High Priority") {
-        filteredIssues = issues.filter((issue) => issue.priority === "High");
-      } else if (tabText === "Medium Priority") {
-        filteredIssues = issues.filter((issue) => issue.priority === "Medium");
-      } else if (tabText === "Low Priority") {
-        console.log('Filtering Low Priority issues...');
-        console.log('All issues:', issues);
-        filteredIssues = issues.filter((issue) => {
-          const priority = issue.priority?.toLowerCase()?.trim();
-          console.log('Issue:', issue.id, 'Priority:', priority, 'Original:', issue.priority);
-          
-          // Include issues with no priority set (null)
-          if (!priority) {
-            console.log('Including issue with no priority:', issue.id);
-            return true;
-          }
-          
-          // Check for any variation of low priority or critical
-          const isLowPriority = priority === "low" || 
-                               priority === "low priority" || 
-                               priority === "low-priority" ||
-                               priority === "low_priority" ||
-                               priority === "critical";
-          console.log('Is low priority?', isLowPriority, 'for issue:', issue.id);
-          return isLowPriority;
-        });
-        console.log('Filtered Low Priority issues:', filteredIssues.map(i => ({ id: i.id, priority: i.priority })));
-      } else if (tabText === "Open") {
-        filteredIssues = issues.filter((issue) => {
-          const status = issue.status?.toLowerCase()?.trim();
-          return (
-            status === "open" || 
-            status === "opened" || 
-            status === "in_progress" ||
-            status === "in progress" ||
-            status === "open issue" ||
-            status === "opened issue"
-          );
-        });
-      } else if (tabText === "Pending") {
-        filteredIssues = issues.filter((issue) => issue.status === "Pending");
-      } else if (tabText === "Closed") {
-        filteredIssues = issues.filter((issue) => issue.status === "Closed");
-      }
-
+    // Search functionality
+    const searchInput = document.getElementById("search-input");
+    searchInput.addEventListener("input", (e) => {
+      const filteredIssues = filterIssues(issues, e.target.value);
       renderIssues(filteredIssues);
     });
-  });
 
-  // Menu toggle functionality
-  const menuToggle = document.querySelector(".menu-toggle");
-  const closeMenu = document.querySelector(".close-menu");
-  const sidebar = document.querySelector(".sidebar");
+    // Tab functionality
+    const tabButtons = document.querySelectorAll(".tab-btn");
+    tabButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        tabButtons.forEach((btn) => btn.classList.remove("active"));
+        button.classList.add("active");
 
-  menuToggle.addEventListener("click", () => {
-    sidebar.classList.add("active");
-  });
+        // Filter issues based on tab
+        let filteredIssues = issues;
+        const tabText = button.textContent.trim();
 
-  closeMenu.addEventListener("click", () => {
-    sidebar.classList.remove("active");
-  });
+        if (tabText === "All Issues") {
+          filteredIssues = issues;
+        } else if (tabText === "High Priority") {
+          filteredIssues = issues.filter((issue) => issue.priority === "High");
+        } else if (tabText === "Medium Priority") {
+          filteredIssues = issues.filter((issue) => issue.priority === "Medium");
+        } else if (tabText === "Low Priority") {
+          filteredIssues = issues.filter((issue) => {
+            const priority = issue.priority?.toLowerCase()?.trim();
+            if (!priority) return true;
+            return priority === "low" || 
+                   priority === "low priority" || 
+                   priority === "low-priority" ||
+                   priority === "low_priority" ||
+                   priority === "critical";
+          });
+        } else if (tabText === "Open") {
+          filteredIssues = issues.filter((issue) => {
+            const status = issue.status?.toLowerCase()?.trim();
+            return status === "open" || 
+                   status === "opened" || 
+                   status === "in_progress" ||
+                   status === "in progress" ||
+                   status === "open issue" ||
+                   status === "opened issue";
+          });
+        } else if (tabText === "Pending") {
+          filteredIssues = issues.filter((issue) => issue.status === "Pending");
+        } else if (tabText === "Closed") {
+          filteredIssues = issues.filter((issue) => issue.status === "Closed");
+        }
 
-  // Close sidebar when clicking outside
-  document.addEventListener("click", (e) => {
-    if (!sidebar.contains(e.target) && !menuToggle.contains(e.target)) {
+        renderIssues(filteredIssues);
+      });
+    });
+
+    // Menu toggle functionality
+    const menuToggle = document.querySelector(".menu-toggle");
+    const closeMenu = document.querySelector(".close-menu");
+    const sidebar = document.querySelector(".sidebar");
+
+    menuToggle.addEventListener("click", () => {
+      sidebar.classList.add("active");
+    });
+
+    closeMenu.addEventListener("click", () => {
       sidebar.classList.remove("active");
-    }
-  });
+    });
 
-  // Modal close functionality
-  const modal = document.getElementById("descriptionModal");
-  const closeBtn = document.querySelector(".close");
+    // Close sidebar when clicking outside
+    document.addEventListener("click", (e) => {
+      if (!sidebar.contains(e.target) && !menuToggle.contains(e.target)) {
+        sidebar.classList.remove("active");
+      }
+    });
 
-  closeBtn.onclick = function () {
-    modal.style.display = "none";
-  };
+    // Modal close functionality
+    const modal = document.getElementById("descriptionModal");
+    const closeBtn = document.querySelector(".close");
 
-  window.onclick = function (event) {
-    if (event.target === modal) {
+    closeBtn.onclick = function () {
       modal.style.display = "none";
-    }
-  };
+    };
+
+    window.onclick = function (event) {
+      if (event.target === modal) {
+        modal.style.display = "none";
+      }
+    };
+
+    // Hide loading overlay after everything is loaded
+    loadingOverlay.classList.add('hidden');
+  } catch (error) {
+    console.error("Error initializing issues page:", error);
+    loadingOverlay.classList.add('error');
+    loadingOverlay.innerHTML = `
+      <div class="loading-container">
+        <div class="loading-text">
+          <span class="brand">Error</span>
+          <span class="subtitle">Failed to load dashboard</span>
+        </div>
+        <div class="loading-message">
+          <i class="fas fa-exclamation-circle"></i>
+          <span>${error.message || 'An unexpected error occurred'}</span>
+        </div>
+        <button onclick="window.location.reload()">
+          <i class="fas fa-redo"></i> Retry
+        </button>
+      </div>
+    `;
+  }
 });
 
 // Make functions available globally
