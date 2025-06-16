@@ -90,7 +90,7 @@ document.addEventListener('DOMContentLoaded', async function() {
   });
 
   // DOM Elements
-  const loadingContainer = document.querySelector(".loading-container");
+  const loadingOverlay = document.getElementById('loading-overlay');
   const adminName = document.getElementById("adminName");
   const adminFullName = document.getElementById("adminFullName");
   const adminProfilePic = document.getElementById("adminProfilePic");
@@ -128,9 +128,26 @@ document.addEventListener('DOMContentLoaded', async function() {
       currentEmail.value = adminData.email;
 
       // Hide loading screen
-      loadingContainer.classList.add("hidden");
+      loadingOverlay.classList.add("hidden");
     } catch (error) {
       console.error('Error initializing page:', error);
+      loadingOverlay.classList.add('error');
+      loadingOverlay.innerHTML = `
+        <div class="loading-container">
+          <div class="loading-text">
+            <span class="brand">Error</span>
+            <span class="subtitle">Failed to load dashboard</span>
+          </div>
+          <div class="loading-message">
+            <i class="fas fa-exclamation-circle"></i>
+            <span>${error.message || 'An unexpected error occurred'}</span>
+          </div>
+          <button onclick="window.location.reload()">
+            <i class="fas fa-redo"></i> Retry
+          </button>
+        </div>
+      `;
+      
       if (error.message === 'No user logged in' || error.message === 'No user data found') {
         window.location.href = "login.html";
       }
