@@ -543,6 +543,8 @@ window.addEventListener("resize", () => {
 // Initialize the page
 async function initializePage() {
   try {
+    const loadingOverlay = document.getElementById('loading-overlay');
+    
     // Create edit modal
     editModal.createModal();
 
@@ -570,9 +572,20 @@ async function initializePage() {
       const users = await getAllUsers();
       renderUsers(users);
     });
+
+    // Hide loading overlay after everything is loaded
+    loadingOverlay.classList.add('hidden');
   } catch (error) {
     console.error("Error initializing users page:", error);
-    alert("Error loading users. Please refresh the page.");
+    loadingOverlay.innerHTML = `
+      <div class="loading-container">
+        <div class="loading-text" style="color: #ff3b30;">Error loading users</div>
+        <div class="loading-message">Please try again</div>
+        <button onclick="window.location.reload()" style="margin-top: 20px; padding: 10px 20px; background: rgb(212, 130, 30); border: none; border-radius: 5px; cursor: pointer;">
+          Retry
+        </button>
+      </div>
+    `;
   }
 }
 
