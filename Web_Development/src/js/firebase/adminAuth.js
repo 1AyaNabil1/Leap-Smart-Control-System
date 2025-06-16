@@ -43,7 +43,7 @@ if(document.querySelector('#login-form')) {
       // Optionally, you can add more admin-specific logic here
       // For now, just redirect to the admin dashboard or homepage
       loginForm.reset();
-      window.location.href = "./Users.html";
+      window.location.href = "./analytics.html";
     }).catch(error => {
       console.error("Login error:", error);
       alert("Login failed: " + error.message);

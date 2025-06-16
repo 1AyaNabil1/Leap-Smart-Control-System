@@ -285,9 +285,22 @@ function padTextWithDots(text, length) {
   return text.slice(0, length) + '...';
 }
 
+// Helper function to check if a user is an admin
+async function isUserAdmin(user) {
+  const adminsRef = collection(db, 'admins');
+  const adminQuery = query(
+    adminsRef,
+    where('email', '==', user.email),
+    where('userID', '==', user.id)
+  );
+  const adminSnapshot = await getDocs(adminQuery);
+  return !adminSnapshot.empty;
+}
+
 // Function to create a user row
 async function createUserRow(user, index) {
-  const statusClass = user.phoneVerified === true ? 'status-active' : 'status-unactive';
+  const isPhoneActivated = user.phoneVerified === "true" || user.phoneVerified === true || user.phoneVerified === 1;
+  const statusClass = isPhoneActivated ? 'status-active' : 'status-unactive';
   const addressData = await getUserAddress(user.id);
   const addressText = addressData ? padTextWithDots(`${addressData.address}, ${addressData.city}, ${addressData.town}`, 20) : '-';
   const emailText = padTextWithDots(user.email, 15);
@@ -298,7 +311,10 @@ async function createUserRow(user, index) {
   // Check if values are truncated
   const isUsernameTruncated = (user.username || '-').length > 11;
   const isPhoneTruncated = (user.phone || '-').length > 12;
-  
+
+  // Check if user is an admin
+  const userIsAdmin = await isUserAdmin(user);
+
   return `
     <div class="table-row">
       <div class="user-image-cell">
@@ -313,14 +329,17 @@ async function createUserRow(user, index) {
       <div class="email-cell" data-email="${user.email}">${emailText}</div>
       <div class="city-cell ${isUsernameTruncated ? 'truncated' : ''}" data-username="${user.username || '-'}">${usernameText}</div>
       <div class="phone-cell ${isPhoneTruncated ? 'truncated' : ''}" data-phone="${user.phone || '-'}">${phoneText}</div>
-      <div class="status-cell ${statusClass}">${user.phoneVerified === true ? 'true' : 'false'}</div>
+      <div class="status-cell ${statusClass}">${isPhoneActivated ? 'true' : 'false'}</div>
       <div class="address-cell" data-user-id="${user.id}">${addressText}</div>
       <div class="manage-cell">
-        <button class="manage-btn" data-user-id="${user.id}">Manage ▾</button>
-        <ul class="dropdown-menu hidden" id="dropdown-${user.id}">
-          <li class="edit-user" data-user-id="${user.id}">Edit</li>
-          <li class="delete-user" data-user-id="${user.id}">Delete</li>
-        </ul>
+        ${userIsAdmin ?
+          `<button class="manage-btn" disabled title="Cannot manage admin user">Admin</button>` :
+          `<button class="manage-btn" data-user-id="${user.id}">Manage ▾</button>
+          <ul class="dropdown-menu hidden" id="dropdown-${user.id}">
+            <li class="edit-user" data-user-id="${user.id}">Edit</li>
+            <li class="delete-user" data-user-id="${user.id}">Delete</li>
+          </ul>`
+        }
       </div>
     </div>
   `;
