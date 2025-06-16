@@ -577,12 +577,20 @@ async function initializePage() {
     loadingOverlay.classList.add('hidden');
   } catch (error) {
     console.error("Error initializing users page:", error);
+    const loadingOverlay = document.getElementById('loading-overlay');
+    loadingOverlay.classList.add('error');
     loadingOverlay.innerHTML = `
       <div class="loading-container">
-        <div class="loading-text" style="color: #ff3b30;">Error loading users</div>
-        <div class="loading-message">Please try again</div>
-        <button onclick="window.location.reload()" style="margin-top: 20px; padding: 10px 20px; background: rgb(212, 130, 30); border: none; border-radius: 5px; cursor: pointer;">
-          Retry
+        <div class="loading-text">
+          <span class="brand">Error</span>
+          <span class="subtitle">Failed to load dashboard</span>
+        </div>
+        <div class="loading-message">
+          <i class="fas fa-exclamation-circle"></i>
+          <span>${error.message || 'An unexpected error occurred'}</span>
+        </div>
+        <button onclick="window.location.reload()">
+          <i class="fas fa-redo"></i> Retry
         </button>
       </div>
     `;
