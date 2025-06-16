@@ -49,8 +49,9 @@ export async function fetchAnalyticsData() {
 
     // Calculate issue metrics
     const totalIssues = issues.length;
-    const pendingIssues = issues.filter(issue => issue.status === 'pending').length;
-    const closedIssues = issues.filter(issue => issue.status === 'closed').length;
+    const pendingIssues = issues.filter(issue => issue.status && issue.status.toLowerCase() === 'pending').length;
+    const closedIssues = issues.filter(issue => issue.status && issue.status.toLowerCase() === 'closed').length;
+    const openIssues = issues.filter(issue => issue.status && issue.status.toLowerCase() === 'open').length;
     const issueStatusRatio = pendingIssues / (closedIssues || 1);
 
     // Calculate product metrics
@@ -60,7 +61,7 @@ export async function fetchAnalyticsData() {
     const productSales = {};
     orders.forEach(order => {
       order.items.forEach(item => {
-        productSales[item.productId] = (productSales[item.productId] || 0) + item.quantity;
+        productSales[item.product_id] = (productSales[item.product_id] || 0) + item.quantity;
       });
     });
     
@@ -71,10 +72,24 @@ export async function fetchAnalyticsData() {
       ? products.find(p => p.id === mostSellingProduct[0])
       : null;
 
-    // Calculate parts metrics
+    // Fetch all parts for total count
     const partsRef = collection(db, 'parts');
     const partsSnapshot = await getDocs(partsRef);
     const totalParts = partsSnapshot.docs.length;
+
+    // Fetch all reorders for most reordered part
+    const reordersRef = collection(db, 'reorders');
+    const reordersSnapshot = await getDocs(reordersRef);
+    const reorders = reordersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+    const partReorders = {};
+    reorders.forEach(reorder => {
+      if (typeof reorder.name === 'string') {
+        partReorders[reorder.name] = (partReorders[reorder.name] || 0) + 1;
+      }
+    });
+    const mostReorderedPart = Object.entries(partReorders)
+      .sort(([,a], [,b]) => b - a)[0];
 
     return {
       users: {
@@ -94,6 +109,7 @@ export async function fetchAnalyticsData() {
         total: totalIssues,
         pending: pendingIssues,
         closed: closedIssues,
+        open: openIssues,
         statusRatio: issueStatusRatio
       },
       products: {
@@ -104,7 +120,11 @@ export async function fetchAnalyticsData() {
         } : null
       },
       parts: {
-        total: totalParts
+        total: totalParts,
+        mostReordered: mostReorderedPart ? {
+          name: mostReorderedPart[0],
+          count: mostReorderedPart[1]
+        } : null
       }
     };
   } catch (error) {
