@@ -777,30 +777,170 @@ async function renderReordersTable() {
     .join("");
 }
 
-// Initial render
-renderComponentCards();
-renderReordersTable();
+// Handle add inventory form submission
+async function handleAddInventory(event) {
+  event.preventDefault();
+  
+  try {
+    const componentName = document.getElementById("componentName").value;
+    const componentPrice = parseFloat(document.getElementById("componentPrice").value);
+    const componentQuantity = parseInt(document.getElementById("componentQuantity").value);
+    const componentDescription = document.getElementById("componentDescription").value;
+    const componentImage = document.getElementById("componentImage").files[0];
+
+    if (!componentName || !componentPrice || !componentQuantity || !componentDescription) {
+      throw new Error("Please fill in all required fields");
+    }
+
+    // Create new component object
+    const newComponent = {
+      id: generateComponentId(),
+      name: componentName,
+      price: componentPrice,
+      quantity: componentQuantity,
+      description: componentDescription,
+      image: componentImage ? URL.createObjectURL(componentImage) : null,
+      dateAdded: new Date().toISOString()
+    };
+
+    // Add to inventory
+    inventory.push(newComponent);
+    localStorage.setItem("inventory", JSON.stringify(inventory));
+
+    // Update UI
+    await renderComponentCards();
+    await renderReordersTable();
+    await populateReorderComponents();
+
+    // Reset form
+    event.target.reset();
+    document.getElementById("imagePreview").innerHTML = `
+      <i class="fa-solid fa-cloud-arrow-up"></i>
+      <span>Upload Image</span>
+    `;
+
+    // Show success message
+    alert("Component added successfully!");
+  } catch (error) {
+    console.error("Error adding component:", error);
+    alert(error.message || "Error adding component. Please try again.");
+  }
+}
+
+// Handle search functionality
+async function handleSearch(event) {
+  const searchTerm = event.target.value.toLowerCase();
+  
+  try {
+    const filteredComponents = inventory.filter(component => 
+      component.name.toLowerCase().includes(searchTerm) ||
+      component.description.toLowerCase().includes(searchTerm)
+    );
+
+    await renderComponentCards(filteredComponents);
+  } catch (error) {
+    console.error("Error searching components:", error);
+  }
+}
 
 // Initialize the page
-document.addEventListener("DOMContentLoaded", async () => {
-  // Display admin header
-  await displayAdmin();
+async function initializePage() {
+  try {
+    const loadingOverlay = document.getElementById('loading-overlay');
+    
+    // Initialize admin auth check
+    initAdminAuthCheck();
 
-  // Initialize inventory from localStorage or use empty array if none exists
-  inventory = JSON.parse(localStorage.getItem("inventory")) || [];
+    // Display admin header
+    await displayAdmin();
 
-  // Calculate last used ID
-  if (inventory.length > 0) {
-    lastUsedId = Math.max(...inventory.map((item) => parseInt(item.id)));
-  } else {
-    lastUsedId = 0;
+    // Initialize inventory from localStorage or use empty array if none exists
+    inventory = JSON.parse(localStorage.getItem("inventory")) || [];
+
+    // Calculate last used ID
+    if (inventory.length > 0) {
+      lastUsedId = Math.max(...inventory.map((item) => parseInt(item.id)));
+    } else {
+      lastUsedId = 0;
+    }
+
+    // Fetch and render components
+    await fetchComponents();
+    await renderComponentCards();
+    await renderReordersTable();
+    await populateReorderComponents();
+
+    // Set up event listeners
+    const addInventoryForm = document.getElementById("addInventoryForm");
+    if (addInventoryForm) {
+      addInventoryForm.addEventListener("submit", handleAddInventory);
+    }
+
+    const searchInput = document.getElementById("search-input");
+    if (searchInput) {
+      searchInput.addEventListener("input", handleSearch);
+    }
+
+    // Menu toggle functionality
+    const menuToggle = document.querySelector(".menu-toggle");
+    const sidebar = document.querySelector(".sidebar");
+    const closeMenu = document.querySelector(".close-menu");
+
+    if (menuToggle && sidebar && closeMenu) {
+      menuToggle.addEventListener("click", () => {
+        sidebar.classList.add("active");
+        menuToggle.style.opacity = "0";
+        menuToggle.style.pointerEvents = "none";
+      });
+
+      closeMenu.addEventListener("click", () => {
+        sidebar.classList.remove("active");
+        menuToggle.style.opacity = "1";
+        menuToggle.style.pointerEvents = "auto";
+      });
+
+      // Close menu when clicking outside
+      document.addEventListener("click", (e) => {
+        if (!sidebar.contains(e.target) && !menuToggle.contains(e.target)) {
+          sidebar.classList.remove("active");
+          menuToggle.style.opacity = "1";
+          menuToggle.style.pointerEvents = "auto";
+        }
+      });
+    }
+
+    // Handle window resize
+    window.addEventListener("resize", () => {
+      if (window.innerWidth >= 993) {
+        sidebar.classList.remove("active");
+        menuToggle.style.opacity = "1";
+        menuToggle.style.pointerEvents = "auto";
+      }
+    });
+
+    // Hide loading overlay after everything is loaded
+    loadingOverlay.classList.add('hidden');
+  } catch (error) {
+    console.error("Error initializing inventory page:", error);
+    const loadingOverlay = document.getElementById('loading-overlay');
+    loadingOverlay.classList.add('error');
+    loadingOverlay.innerHTML = `
+      <div class="loading-container">
+        <div class="loading-text">
+          <span class="brand">Error</span>
+          <span class="subtitle">Failed to load dashboard</span>
+        </div>
+        <div class="loading-message">
+          <i class="fas fa-exclamation-circle"></i>
+          <span>${error.message || 'An unexpected error occurred'}</span>
+        </div>
+        <button onclick="window.location.reload()">
+          <i class="fas fa-redo"></i> Retry
+        </button>
+      </div>
+    `;
   }
+}
 
-  // Initial render
-  await renderComponentCards();
-  renderInventoryTable();
-  await populateReorderComponents();
-  await renderReordersTable();
-
-  // ... rest of the initialization code ...
-});
+// Start the page when DOM is loaded
+document.addEventListener("DOMContentLoaded", initializePage);
