@@ -701,6 +701,10 @@ body.loaded .dashboard-header {
   .add-inventory-section {
     width: 44%;
   }
+
+  .dashboard-header {
+    width: 44%;
+  }
 }
 
 /* Update submit button style */
