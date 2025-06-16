@@ -302,134 +302,159 @@ async function displayAdmin() {
 
 // Initialize the page
 document.addEventListener("DOMContentLoaded", async () => {
-  // Initialize admin auth check
-  initAdminAuthCheck();
+  const loadingOverlay = document.getElementById('loading-overlay');
+  
+  try {
+    // Initialize admin auth check
+    initAdminAuthCheck();
 
-  // Display admin header
-  await displayAdmin();
+    // Display admin header
+    await displayAdmin();
 
-  // Fetch and render initial orders
-  let orders = await fetchOrders();
-  await renderOrders(orders);
+    // Fetch and render initial orders
+    let orders = await fetchOrders();
+    await renderOrders(orders);
 
-  // Add event delegation for order ID, details, and reason clicks
-  const ordersList = document.getElementById("ordersList");
-  ordersList.addEventListener("click", (e) => {
-    const row = e.target.closest(".table-row");
-    if (!row) return;
+    // Add event delegation for order ID, details, and reason clicks
+    const ordersList = document.getElementById("ordersList");
+    ordersList.addEventListener("click", (e) => {
+      const row = e.target.closest(".table-row");
+      if (!row) return;
 
-    if (e.target.classList.contains("order-id")) {
-      const orderId = row.dataset.orderId;
-      showOrderId(orderId);
-    } else if (e.target.classList.contains("details")) {
-      const details = row.dataset.details;
-      showDetails(details);
-    } else if (e.target.classList.contains("reason")) {
-      const reason = row.dataset.reason;
-      showReason(reason);
-    }
-  });
-
-  // Menu toggle functionality
-  const menuToggle = document.querySelector(".menu-toggle");
-  const closeMenu = document.querySelector(".close-menu");
-  const sidebar = document.querySelector(".sidebar");
-
-  menuToggle.addEventListener("click", () => {
-    sidebar.classList.add("active");
-  });
-
-  closeMenu.addEventListener("click", () => {
-    sidebar.classList.remove("active");
-  });
-
-  // Close sidebar when clicking outside
-  document.addEventListener("click", (e) => {
-    if (!sidebar.contains(e.target) && !menuToggle.contains(e.target)) {
-      sidebar.classList.remove("active");
-    }
-  });
-
-  // Search functionality
-  const searchInput = document.getElementById("search-input");
-  searchInput.addEventListener("input", (e) => {
-    const filteredOrders = filterOrders(orders, e.target.value);
-    renderOrders(filteredOrders);
-  });
-
-  // Tab functionality
-  const tabButtons = document.querySelectorAll(".tab-btn");
-  tabButtons.forEach((button) => {
-    button.addEventListener("click", () => {
-      tabButtons.forEach((btn) => btn.classList.remove("active"));
-      button.classList.add("active");
-
-      // Filter orders based on tab
-      let filteredOrders = orders;
-      const tabText = button.textContent.trim();
-
-      if (tabText === "All Orders") {
-        filteredOrders = orders;
-      } else if (tabText === "Pending") {
-        filteredOrders = orders.filter((order) => order.status === "pending");
-      } else if (tabText === "Completed") {
-        filteredOrders = orders.filter((order) => order.status === "completed");
-      } else if (tabText === "Canceled") {
-        filteredOrders = orders.filter((order) => order.status === "canceled");
+      if (e.target.classList.contains("order-id")) {
+        const orderId = row.dataset.orderId;
+        showOrderId(orderId);
+      } else if (e.target.classList.contains("details")) {
+        const details = row.dataset.details;
+        showDetails(details);
+      } else if (e.target.classList.contains("reason")) {
+        const reason = row.dataset.reason;
+        showReason(reason);
       }
+    });
 
+    // Menu toggle functionality
+    const menuToggle = document.querySelector(".menu-toggle");
+    const closeMenu = document.querySelector(".close-menu");
+    const sidebar = document.querySelector(".sidebar");
+
+    menuToggle.addEventListener("click", () => {
+      sidebar.classList.add("active");
+    });
+
+    closeMenu.addEventListener("click", () => {
+      sidebar.classList.remove("active");
+    });
+
+    // Close sidebar when clicking outside
+    document.addEventListener("click", (e) => {
+      if (!sidebar.contains(e.target) && !menuToggle.contains(e.target)) {
+        sidebar.classList.remove("active");
+      }
+    });
+
+    // Search functionality
+    const searchInput = document.getElementById("search-input");
+    searchInput.addEventListener("input", (e) => {
+      const filteredOrders = filterOrders(orders, e.target.value);
       renderOrders(filteredOrders);
     });
-  });
 
-  // Modal close functionality for both modals
-  const modals = document.querySelectorAll('.modal');
-  const closeBtns = document.querySelectorAll('.close');
+    // Tab functionality
+    const tabButtons = document.querySelectorAll(".tab-btn");
+    tabButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        tabButtons.forEach((btn) => btn.classList.remove("active"));
+        button.classList.add("active");
 
-  closeBtns.forEach(btn => {
-    btn.onclick = function() {
-      btn.closest('.modal').style.display = "none";
-    }
-  });
+        // Filter orders based on tab
+        let filteredOrders = orders;
+        const tabText = button.textContent.trim();
 
-  window.onclick = function(event) {
-    modals.forEach(modal => {
-      if (event.target === modal) {
-        modal.style.display = "none";
+        if (tabText === "All Orders") {
+          filteredOrders = orders;
+        } else if (tabText === "Pending") {
+          filteredOrders = orders.filter((order) => order.status === "pending");
+        } else if (tabText === "Completed") {
+          filteredOrders = orders.filter((order) => order.status === "completed");
+        } else if (tabText === "Canceled") {
+          filteredOrders = orders.filter((order) => order.status === "canceled");
+        }
+
+        renderOrders(filteredOrders);
+      });
+    });
+
+    // Modal close functionality for both modals
+    const modals = document.querySelectorAll('.modal');
+    const closeBtns = document.querySelectorAll('.close');
+
+    closeBtns.forEach(btn => {
+      btn.onclick = function() {
+        btn.closest('.modal').style.display = "none";
       }
     });
-  };
 
-  // Event delegation for status change
-  document.getElementById("ordersList").addEventListener("change", async (e) => {
-    if (e.target.classList.contains("status-select")) {
-      const row = e.target.closest(".table-row");
-      const orderId = e.target.dataset.orderId;
-      const newStatus = e.target.value;
-      let newReason = row.dataset.reason;
-      if (newStatus === "canceled") {
-        newReason = prompt("Please enter the reason for cancellation:", newReason !== '-' ? newReason : '');
-        if (!newReason) {
-          // If no reason entered, revert to previous status
-          e.target.value = orders.find(o => o.id === orderId).status;
-          return;
+    window.onclick = function(event) {
+      modals.forEach(modal => {
+        if (event.target === modal) {
+          modal.style.display = "none";
         }
-      } else {
-        newReason = '-';
+      });
+    };
+
+    // Event delegation for status change
+    document.getElementById("ordersList").addEventListener("change", async (e) => {
+      if (e.target.classList.contains("status-select")) {
+        const row = e.target.closest(".table-row");
+        const orderId = e.target.dataset.orderId;
+        const newStatus = e.target.value;
+        let newReason = row.dataset.reason;
+        if (newStatus === "canceled") {
+          newReason = prompt("Please enter the reason for cancellation:", newReason !== '-' ? newReason : '');
+          if (!newReason) {
+            // If no reason entered, revert to previous status
+            e.target.value = orders.find(o => o.id === orderId).status;
+            return;
+          }
+        } else {
+          newReason = '-';
+        }
+        // Update Firestore
+        try {
+          await updateDoc(doc(db, 'orders', orderId), {
+            status: newStatus,
+            reason: newReason
+          });
+          // Update local orders array and re-render
+          orders = orders.map(o => o.id === orderId ? { ...o, status: newStatus, reason: newReason } : o);
+          await renderOrders(orders);
+        } catch (err) {
+          alert("Failed to update order status. Please try again.");
+          e.target.value = orders.find(o => o.id === orderId).status;
+        }
       }
-      // Update Firestore
-      try {
-        await updateDoc(doc(db, 'orders', orderId), {
-          status: newStatus,
-          reason: newReason
-        });
-        // Update local orders array and re-render
-        orders = orders.map(o => o.id === orderId ? { ...o, status: newStatus, reason: newReason } : o);
-        await renderOrders(orders);
-      } catch (err) {
-        alert("Failed to update order status. Please try again.");
-        e.target.value = orders.find(o => o.id === orderId).status;
-      }
-    }
-  });
+    });
+
+    // Hide loading overlay after everything is loaded
+    loadingOverlay.classList.add('hidden');
+  } catch (error) {
+    console.error("Error initializing orders page:", error);
+    loadingOverlay.classList.add('error');
+    loadingOverlay.innerHTML = `
+      <div class="loading-container">
+        <div class="loading-text">
+          <span class="brand">Error</span>
+          <span class="subtitle">Failed to load dashboard</span>
+        </div>
+        <div class="loading-message">
+          <i class="fas fa-exclamation-circle"></i>
+          <span>${error.message || 'An unexpected error occurred'}</span>
+        </div>
+        <button onclick="window.location.reload()">
+          <i class="fas fa-redo"></i> Retry
+        </button>
+      </div>
+    `;
+  }
 });
