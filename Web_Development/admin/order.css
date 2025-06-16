@@ -277,6 +277,10 @@ body {
   color: #f1f1f1;
 }
 
+div.header-cell:nth-child(2) {
+  padding-left: 10px;
+}
+
 .table-row {
   display: grid;
   grid-template-columns: 0.5fr 1.5fr 1.2fr 0.8fr 0.8fr 1fr 40px;
@@ -327,6 +331,7 @@ body {
   white-space: nowrap;
   cursor: pointer;
   transition: color 0.2s ease;
+  padding-left: 10px;
 }
 
 .details:hover {
@@ -615,6 +620,12 @@ body {
     padding: 8px 16px;
     font-size: 13px;
   }
+  .detail-price span {
+    min-width: 100px;
+  }
+  .detail-price {
+  flex-wrap: wrap;
+  }
 }
 
 @media screen and (max-width: 480px) {
@@ -638,6 +649,14 @@ body {
   .tab-btn {
     padding: 6px 14px;
     font-size: 12px;
+  }
+
+  .detail-price {
+    display: flex;
+    gap: 14px;
+    color: #ccc;
+    font-size: 14px;
+    flex-wrap: wrap;
   }
 }
 

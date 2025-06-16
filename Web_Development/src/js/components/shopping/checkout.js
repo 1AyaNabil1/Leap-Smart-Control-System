@@ -308,7 +308,8 @@ const initCheckout = async () => {
         items: cartItems.map(item => ({
           name: item.name,
           quantity: item.quantity,
-          price: item.price
+          price: item.price,
+          product_id: item.product_id || item.id
         })),
         payment: {
           method: 'Cash on Delivery'

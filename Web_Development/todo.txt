@@ -193,3 +193,16 @@ maris14415@hosliy.com
 G*Un"Z-YwLF7_Fq
 
 rgb(102, 102, 102)
+
+The 'Details' teble field in the webpage of 'admin/order.html' should contain these information about the order as also shown in the attached images:
+The ordered items:
+ - Image
+ - Name
+ - Price
+ - Quantity
+ - Total
+The order info:
+ - Shipping:
+ - Subtotal:
+ - Tax
+ - Total

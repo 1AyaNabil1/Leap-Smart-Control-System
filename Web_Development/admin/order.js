@@ -117,16 +117,30 @@ async function createOrderRow(order) {
           summary: order.summary || null
         };
       }
-      return null;
+      // Fallback for missing product
+      return {
+        name: "Unknown Product",
+        image: "",
+        price: "-",
+        quantity: item.quantity,
+        totalPrice: "-",
+        summary: order.summary || null
+      };
     });
 
     const details = await Promise.all(detailsPromises);
     fullDetails = details.filter(detail => detail !== null);
-    
+
     // Create a summary string for the table display
-    orderDetails = fullDetails.map(detail => 
-      `${detail.name} (${detail.quantity})`
-    ).join(', ');
+    if (fullDetails.length > 0) {
+      orderDetails = fullDetails.map(detail => 
+        `${detail.name} (${detail.quantity})`
+      ).join(', ');
+    } else {
+      orderDetails = "No details available";
+    }
+  } else {
+    orderDetails = "No details available";
   }
 
   const truncatedReason = truncateText(order.reason || '-', 15);
