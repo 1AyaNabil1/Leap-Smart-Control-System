@@ -1,3 +1,4 @@
+import { fetchAnalyticsData } from './src/data/analyticsData.js';
 // DOM Elements
 const menuToggle = document.querySelector(".menu-toggle");
 const closeMenu = document.querySelector(".close-menu");
@@ -55,263 +56,240 @@ const memoizedFormatNumber = (() => {
   const cache = new Map();
   return (number) => {
     if (cache.has(number)) return cache.get(number);
-    const formatted =
-      number >= 1000 ? (number / 1000).toFixed(1) + "k" : number.toString();
+    const formatted = number >= 1000 ? (number / 1000).toFixed(1) + "k" : number.toString();
     cache.set(number, formatted);
     return formatted;
   };
 })();
 
-// Display the dashboard content with error handling
-const displayDashboard = function () {
-  try {
-    if (!analyticsData) {
-      throw new Error("Analytics data is not available");
-    }
+const memoizedFormatRatio = (() => {
+  const cache = new Map();
+  return (ratio) => {
+    if (cache.has(ratio)) return cache.get(ratio);
+    const formatted = (ratio * 100).toFixed(1) + "%";
+    cache.set(ratio, formatted);
+    return formatted;
+  };
+})();
 
+// Display the dashboard content with error handling
+const displayDashboard = async function () {
+  try {
     const mainContent = document.querySelector(".main-content");
     if (!mainContent) {
       throw new Error("Main content container not found");
     }
 
+    // Fetch analytics data
+    const analyticsData = await fetchAnalyticsData();
+
     // Create a DocumentFragment for better performance
     const fragment = document.createDocumentFragment();
     const container = document.createElement("div");
 
-    // Add image error handling
-    const adminImage = `<img src="${admin.image}" alt="Admin" onerror="this.src='${admin.fallbackImage}'; this.onerror=null;" />`;
-
     container.innerHTML = `
       <header class="dashboard-header">
         <div class="profile">
-          <h2>Welcome, <span>${getFirstName(admin.userName)}</span></h2>
-        </div>
-        <div class="admin-info">
-          ${adminImage}
-          <span>${admin.userName}</span>
+          <h2>Welcome, <span>Admin</span></h2>
         </div>
       </header>
       
       <div class="analytics-container">
         <div class="analytics-grid">
+          <!-- Users Section -->
           <div class="analytics-card">
             <div class="analytics-icon">
               <i class="fas fa-users"></i>
             </div>
             <div class="analytics-details">
               <h3>Total Users</h3>
-              <div class="analytics-value">${memoizedFormatNumber(
-                analyticsData.kpiData.users.total
-              )}</div>
-              <div class="trend" style="color: ${
-                analyticsData.kpiData.users.isPositive ? "#28a745" : "#dc3545"
-              }">
-                <i class="fas fa-arrow-${
-                  analyticsData.kpiData.users.isPositive ? "up" : "down"
-                }"></i>
-                ${analyticsData.kpiData.users.trend}%
+              <div class="analytics-value">${memoizedFormatNumber(analyticsData.users.total)}</div>
+              <div class="analytics-subdetails">
+                <div>Phone Activated: ${memoizedFormatNumber(analyticsData.users.activated)}</div>
+                <div>With Orders: ${memoizedFormatNumber(analyticsData.users.withOrders)}</div>
+                <div>With Issues: ${memoizedFormatNumber(analyticsData.users.withIssues)}</div>
+                <div class="users-issue-ratio-container">
+                  <span class="users-issue-ratio-label">Users with Issues:</span>
+                  <span class="users-issue-ratio-value">
+                    ${(
+                      analyticsData.users.total > 0
+                        ? ((analyticsData.users.withIssues / analyticsData.users.total) * 100).toFixed(1)
+                        : '0.0'
+                    )}%
+                  </span>
+                  <span class="users-issue-ratio-explanation">
+                    (users who reported at least one issue)
+                  </span>
+                  <span class="users-issue-ratio-label">Users without Issues:</span>
+                  <span class="users-issue-ratio-value">
+                    ${(
+                      analyticsData.users.total > 0
+                        ? (((analyticsData.users.total - analyticsData.users.withIssues) / analyticsData.users.total) * 100).toFixed(1)
+                        : '0.0'
+                    )}%
+                  </span>
+                  <span class="users-issue-ratio-explanation">
+                    (users who never reported an issue)
+                  </span>
+                </div>
+                <div class="users-pie-chart-container">
+                  <svg class="users-pie-chart" width="80" height="80" viewBox="0 0 32 32">
+                    ${(() => {
+                      const total = analyticsData.users.withIssues + (analyticsData.users.total - analyticsData.users.withIssues);
+                      const withIssues = analyticsData.users.withIssues;
+                      const withoutIssues = analyticsData.users.total - analyticsData.users.withIssues;
+                      const withIssuesAngle = (withIssues / total) * 360;
+                      const withoutIssuesAngle = 360 - withIssuesAngle;
+                      // Pie chart arc calculation
+                      const describeArc = (cx, cy, r, startAngle, endAngle, color) => {
+                        const start = polarToCartesian(cx, cy, r, endAngle);
+                        const end = polarToCartesian(cx, cy, r, startAngle);
+                        const largeArcFlag = endAngle - startAngle <= 180 ? "0" : "1";
+                        const d = [
+                          "M", cx, cy,
+                          "L", start.x, start.y,
+                          "A", r, r, 0, largeArcFlag, 0, end.x, end.y,
+                          "Z"
+                        ].join(" ");
+                        return `<path d='${d}' fill='${color}'></path>`;
+                      };
+                      function polarToCartesian(cx, cy, r, angle) {
+                        const rad = (angle - 90) * Math.PI / 180.0;
+                        return {
+                          x: cx + (r * Math.cos(rad)),
+                          y: cy + (r * Math.sin(rad))
+                        };
+                      }
+                      // With Issues slice (orange)
+                      const withIssuesPath = describeArc(16, 16, 16, 0, withIssuesAngle, '#d4821e');
+                      // Without Issues slice (green)
+                      const withoutIssuesPath = describeArc(16, 16, 16, withIssuesAngle, 360, '#28a745');
+                      return withIssuesPath + withoutIssuesPath;
+                    })()}
+                  </svg>
+                  <div class="users-pie-legend">
+                    <span><span class="pie-legend-color" style="background:#d4821e;"></span> With Issues</span>
+                    <span><span class="pie-legend-color" style="background:#28a745;"></span> Without Issues</span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
 
+          <!-- Orders Section -->
           <div class="analytics-card">
             <div class="analytics-icon">
-              <i class="fas fa-shopping-cart"></i>
+              <i class="fa-solid fa-cart-shopping"></i>
             </div>
             <div class="analytics-details">
               <h3>Total Orders</h3>
-              <div class="analytics-value">${memoizedFormatNumber(
-                analyticsData.kpiData.orders.total
-              )}</div>
-              <div class="trend" style="color: ${
-                analyticsData.kpiData.orders.isPositive ? "#28a745" : "#dc3545"
-              }">
-                <i class="fas fa-arrow-${
-                  analyticsData.kpiData.orders.isPositive ? "up" : "down"
-                }"></i>
-                ${analyticsData.kpiData.orders.trend}%
+              <div class="analytics-value">${memoizedFormatNumber(analyticsData.orders.total)}</div>
+              <div class="analytics-subdetails">
+                <div>Completed: ${memoizedFormatNumber(analyticsData.orders.completed)}</div>
+                <div>Pending: ${memoizedFormatNumber(analyticsData.orders.pending)}</div>
+                <div>Canceled: ${memoizedFormatNumber(analyticsData.orders.canceled)}</div>
+                <div class="order-ratio-container">
+                  <span class="order-ratio-label">Order Ratio:</span>
+                  <span class="order-ratio-value">
+                    ${(
+                      analyticsData.orders.total > 0
+                        ? `${((analyticsData.orders.completed / analyticsData.orders.total) * 100).toFixed(1)}% : ${((analyticsData.orders.pending / analyticsData.orders.total) * 100).toFixed(1)}% : ${((analyticsData.orders.canceled / analyticsData.orders.total) * 100).toFixed(1)}%`
+                        : 'N/A'
+                    )}
+                  </span>
+                  <span class="order-ratio-explanation" title="Ratio of completed, pending, and canceled orders (completed:pending:canceled)">
+                    (completed : pending : canceled)
+                  </span>
+                </div>
+                <div class="orders-pie-chart-container">
+                  <svg class="orders-pie-chart" width="80" height="80" viewBox="0 0 32 32">
+                    ${(() => {
+                      const total = analyticsData.orders.total;
+                      const completed = analyticsData.orders.completed;
+                      const pending = analyticsData.orders.pending;
+                      const canceled = analyticsData.orders.canceled;
+                      if (total === 0) return '';
+                      const completedAngle = (completed / total) * 360;
+                      const pendingAngle = (pending / total) * 360;
+                      const canceledAngle = (canceled / total) * 360;
+                      // Pie chart arc calculation
+                      const describeArc = (cx, cy, r, startAngle, endAngle, color) => {
+                        const start = polarToCartesian(cx, cy, r, endAngle);
+                        const end = polarToCartesian(cx, cy, r, startAngle);
+                        const largeArcFlag = endAngle - startAngle <= 180 ? "0" : "1";
+                        const d = [
+                          "M", cx, cy,
+                          "L", start.x, start.y,
+                          "A", r, r, 0, largeArcFlag, 0, end.x, end.y,
+                          "Z"
+                        ].join(" ");
+                        return `<path d='${d}' fill='${color}'></path>`;
+                      };
+                      function polarToCartesian(cx, cy, r, angle) {
+                        const rad = (angle - 90) * Math.PI / 180.0;
+                        return {
+                          x: cx + (r * Math.cos(rad)),
+                          y: cy + (r * Math.sin(rad))
+                        };
+                      }
+                      let start = 0;
+                      const completedPath = describeArc(16, 16, 16, start, start + completedAngle, '#28a745');
+                      start += completedAngle;
+                      const pendingPath = describeArc(16, 16, 16, start, start + pendingAngle, '#d4821e');
+                      start += pendingAngle;
+                      const canceledPath = describeArc(16, 16, 16, start, start + canceledAngle, '#dc3545');
+                      return completedPath + pendingPath + canceledPath;
+                    })()}
+                  </svg>
+                  <div class="orders-pie-legend">
+                    <span><span class="pie-legend-color" style="background:#28a745;"></span> Completed</span>
+                    <span><span class="pie-legend-color" style="background:#d4821e;"></span> Pending</span>
+                    <span><span class="pie-legend-color" style="background:#dc3545;"></span> Canceled</span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
 
+          <!-- Issues Section -->
           <div class="analytics-card">
             <div class="analytics-icon">
-              <i class="fas fa-dollar-sign"></i>
+              <i class="fas fa-triangle-exclamation"></i>
             </div>
             <div class="analytics-details">
-              <h3>Revenue</h3>
-              <div class="analytics-value">${memoizedFormatCurrency(
-                analyticsData.kpiData.revenue.total
-              )}</div>
-              <div class="trend" style="color: ${
-                analyticsData.kpiData.revenue.isPositive ? "#28a745" : "#dc3545"
-              }">
-                <i class="fas fa-arrow-${
-                  analyticsData.kpiData.revenue.isPositive ? "up" : "down"
-                }"></i>
-                ${analyticsData.kpiData.revenue.trend}%
+              <h3>Total Issues</h3>
+              <div class="analytics-value">${memoizedFormatNumber(analyticsData.issues.total)}</div>
+              <div class="analytics-subdetails">
+                <div>Pending: ${memoizedFormatNumber(analyticsData.issues.pending)}</div>
+                <div>Closed: ${memoizedFormatNumber(analyticsData.issues.closed)}</div>
+                <div>Status Ratio: ${memoizedFormatRatio(analyticsData.issues.statusRatio)}</div>
               </div>
             </div>
           </div>
 
+          <!-- Products Section -->
           <div class="analytics-card">
             <div class="analytics-icon">
               <i class="fas fa-box"></i>
             </div>
             <div class="analytics-details">
               <h3>Total Products</h3>
-              <div class="analytics-value">${
-                analyticsData.kpiData.products.total
-              }</div>
-              <div class="trend" style="color: ${
-                analyticsData.kpiData.products.isPositive
-                  ? "#28a745"
-                  : "#dc3545"
-              }">
-                <i class="fas fa-arrow-${
-                  analyticsData.kpiData.products.isPositive ? "up" : "down"
-                }"></i>
-                ${Math.abs(analyticsData.kpiData.products.trend)}%
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="charts-section">
-          <div class="chart-container">
-            <h3>Revenue Growth</h3>
-            <div class="chart">
-              ${analyticsData.monthlyData.months
-                .map((month, index) => {
-                  const monthlyHeight =
-                    (analyticsData.monthlyData.revenue[index] /
-                      Math.max(...analyticsData.monthlyData.revenue)) *
-                    100;
-                  // Calculate cumulative revenue
-                  const cumulativeRevenue = analyticsData.monthlyData.revenue
-                    .slice(0, index + 1)
-                    .reduce((sum, val) => sum + val, 0);
-                  const cumulativeHeight =
-                    (cumulativeRevenue /
-                      (Math.max(...analyticsData.monthlyData.revenue) *
-                        (index + 1))) *
-                    100;
-
-                  return `
-                  <div class="bar-wrapper">
-                    <div class="bar-group">
-                      <div class="bar monthly-bar" style="height: ${monthlyHeight}%" title="${memoizedFormatCurrency(
-                    analyticsData.monthlyData.revenue[index]
-                  )} monthly"></div>
-                      <div class="bar cumulative-bar" style="height: ${cumulativeHeight}%" title="${memoizedFormatCurrency(
-                    cumulativeRevenue
-                  )} cumulative"></div>
-                    </div>
-                    <span class="month">${month}</span>
-                  </div>
-                `;
-                })
-                .reverse()
-                .join("")}
-            </div>
-            <div class="chart-legend">
-              <div class="legend-item">
-                <div class="legend-color monthly-color"></div>
-                <span>Monthly Revenue</span>
-              </div>
-              <div class="legend-item">
-                <div class="legend-color cumulative-color"></div>
-                <span>Cumulative Revenue</span>
+              <div class="analytics-value">${memoizedFormatNumber(analyticsData.products.total)}</div>
+              <div class="analytics-subdetails">
+                <div>Most Selling: ${analyticsData.products.mostSelling ? analyticsData.products.mostSelling.name : 'N/A'}</div>
+                <div>Sales: ${analyticsData.products.mostSelling ? memoizedFormatNumber(analyticsData.products.mostSelling.sales) : 'N/A'}</div>
               </div>
             </div>
           </div>
 
-          <div class="chart-container">
-            <h3>Orders vs Users</h3>
-            <div class="chart">
-              ${analyticsData.monthlyData.months
-                .map((month, index) => {
-                  const ordersHeight =
-                    (analyticsData.monthlyData.orders[index] /
-                      Math.max(...analyticsData.monthlyData.orders)) *
-                    100;
-                  const usersHeight =
-                    (analyticsData.monthlyData.users[index] /
-                      Math.max(...analyticsData.monthlyData.users)) *
-                    100;
-                  return `
-                  <div class="bar-wrapper">
-                    <div class="bar-group">
-                      <div class="bar orders-bar" style="height: ${ordersHeight}%" title="${analyticsData.monthlyData.orders[index]} orders"></div>
-                      <div class="bar users-bar" style="height: ${usersHeight}%" title="${analyticsData.monthlyData.users[index]} users"></div>
-                    </div>
-                    <span class="month">${month}</span>
-                  </div>
-                `;
-                })
-                .join("")}
+          <!-- Parts Section -->
+          <div class="analytics-card">
+            <div class="analytics-icon">
+              <i class="fa-solid fa-warehouse"></i>
             </div>
-            <div class="chart-legend">
-              <div class="legend-item">
-                <div class="legend-color orders-color"></div>
-                <span>Orders</span>
-              </div>
-              <div class="legend-item">
-                <div class="legend-color users-color"></div>
-                <span>Users</span>
-              </div>
-            </div>
-          </div>
-
-          <div class="chart-container">
-            <h3>Top Products</h3>
-            <div style="padding: 20px 0;">
-              ${analyticsData.topProducts
-                .map((product) => {
-                  const width =
-                    (product.revenue /
-                      Math.max(
-                        ...analyticsData.topProducts.map((p) => p.revenue)
-                      )) *
-                    100;
-                  return `
-                  <div class="product-bar-wrapper">
-                    <span class="product-name">${product.name}</span>
-                    <div class="product-bar" style="width: ${width}%">
-                      <span class="product-value">${memoizedFormatCurrency(
-                        product.revenue
-                      )}</span>
-                    </div>
-                  </div>
-                `;
-                })
-                .join("")}
-            </div>
-          </div>
-
-          <div class="chart-container">
-            <h3>Geographic Distribution</h3>
-            <div style="padding: 20px 0;">
-              ${analyticsData.geographicData
-                .map((region) => {
-                  const width =
-                    (region.revenue /
-                      Math.max(
-                        ...analyticsData.geographicData.map((r) => r.revenue)
-                      )) *
-                    100;
-                  return `
-                  <div class="region-bar-wrapper">
-                    <span class="region-name">${region.region}</span>
-                    <div class="region-bar" style="width: ${width}%">
-                      <span class="region-value">${memoizedFormatCurrency(
-                        region.revenue
-                      )} | ${memoizedFormatNumber(region.orders)} orders</span>
-                    </div>
-                  </div>
-                `;
-                })
-                .join("")}
+            <div class="analytics-details">
+              <h3>Total Parts</h3>
+              <div class="analytics-value">${memoizedFormatNumber(analyticsData.parts.total)}</div>
             </div>
           </div>
         </div>
