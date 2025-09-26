@@ -63,12 +63,6 @@ Leap-Smart-Control-System/
 - **IoT Development**: Firmware and hardware modules for smart device connectivity and automation.
 - **Documentation**: Comprehensive technical and user documentation for all modules.
 
-- **Ring_Development**
-   - Focuses on hardware integration for a smart ring to enhance control options.
-
-- **Web_Development**
-   - Includes web-based interface and features for remote access.
-
 ---
 
 
