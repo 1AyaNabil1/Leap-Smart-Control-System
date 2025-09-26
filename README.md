@@ -63,10 +63,10 @@ Leap-Smart-Control-System/
 - **IoT Development**: Firmware and hardware modules for smart device connectivity and automation.
 - **Documentation**: Comprehensive technical and user documentation for all modules.
 
-5. **Ring_Development**
+- **Ring_Development**
    - Focuses on hardware integration for a smart ring to enhance control options.
 
-6. **Web_Development**
+- **Web_Development**
    - Includes web-based interface and features for remote access.
 
 ---
@@ -119,7 +119,7 @@ Leap-Smart-Control-System/
 
 1. **Clone the Repository**
    ```bash
-   git clone https://github.com/1AyaNabil1/Leap-Smart-Control-System.git
+   git clone https://github.com/Leap-Smart-Solutions/Leap-Smart-Control-System.git
    cd Leap-Smart-Control-System
    ```
 
