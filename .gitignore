@@ -44,3 +44,7 @@ secrets/*.json
 Thumbs.db
 .DS_Store
 >>>>>>> face-recognition
+
+.github
+.idea
+.vscode
