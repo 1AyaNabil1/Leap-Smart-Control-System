@@ -8,31 +8,25 @@
    <strong>Empowering Intelligent Home Automation with Advanced AI, IoT, and Seamless User Experience</strong>
 </p>
 
-<p>
+<p align="center">
    <a href="https://github.com/1AyaNabil1/Leap-Smart-Control-System/blob/main/LICENSE">
       <img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License">
    </a>
-
    <a href="https://github.com/1AyaNabil1/Leap-Smart-Control-System/graphs/contributors">
       <img src="https://img.shields.io/github/contributors/1AyaNabil1/Leap-Smart-Control-System" alt="Contributors">
    </a>
-
    <a href="https://github.com/1AyaNabil1/Leap-Smart-Control-System">
       <img src="https://img.shields.io/github/languages/count/1AyaNabil1/Leap-Smart-Control-System" alt="Languages">
    </a>
-
    <a href="https://github.com/1AyaNabil1/Leap-Smart-Control-System">
       <img src="https://img.shields.io/github/repo-size/1AyaNabil1/Leap-Smart-Control-System" alt="Repository Size">
    </a>
-
    <a href="https://github.com/1AyaNabil1/Leap-Smart-Control-System">
       <img src="https://img.shields.io/github/last-commit/1AyaNabil1/Leap-Smart-Control-System" alt="Last Commit">
    </a>
-
    <a href="https://github.com/1AyaNabil1/Leap-Smart-Control-System/watchers">
       <img src="https://img.shields.io/github/watchers/1AyaNabil1/Leap-Smart-Control-System?style=social" alt="Watchers">
    </a>
-   
    <a href="https://github.com/1AyaNabil1/Leap-Smart-Control-System/blob/main/CODE_OF_CONDUCT.md">
       <img src="https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg" alt="Code of Conduct">
    </a>
