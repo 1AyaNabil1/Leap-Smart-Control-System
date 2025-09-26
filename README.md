@@ -24,16 +24,9 @@
    <a href="https://github.com/1AyaNabil1/Leap-Smart-Control-System">
       <img src="https://img.shields.io/github/last-commit/1AyaNabil1/Leap-Smart-Control-System" alt="Last Commit">
    </a>
-   <a href="https://github.com/1AyaNabil1/Leap-Smart-Control-System/watchers">
-      <img src="https://img.shields.io/github/watchers/1AyaNabil1/Leap-Smart-Control-System?style=social" alt="Watchers">
-   </a>
    <a href="https://github.com/1AyaNabil1/Leap-Smart-Control-System/blob/main/CODE_OF_CONDUCT.md">
       <img src="https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg" alt="Code of Conduct">
    </a>
-
-# LEAP Smart Control System
-
----
 
 ## Executive Summary
 
