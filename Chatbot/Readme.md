@@ -5,7 +5,8 @@
 - Assist in recipes using RAG system.
 - Categorize shopping lists.
 - General chat.
-Intent detection using LlaMa 3 and memory and context handling using Lang Chain.**
+- Detect intent using LlaMa 3 and memory and context handling using LangChain.**
+
 
 
 
